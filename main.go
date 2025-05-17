@@ -19,6 +19,9 @@ type sprite struct {
 
 var player sprite
 var ghosts []*sprite
+var score int
+var lives = 1
+var numDots int
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
@@ -39,7 +42,9 @@ func loadMaze(file string) error {
 			case 'P':
 				player = sprite{row, col}
 			case 'G':
-				ghosts = append(ghosts, &sprite{row, col}) //use {} to construct structure
+				ghosts = append(ghosts, &sprite{row, col})
+			case '.':
+				numDots++ //use {} to construct structure
 			}
 		}
 	}
@@ -52,6 +57,8 @@ func printScreen() {
 		for _, chr := range line {
 			switch chr {
 			case '#':
+				fallthrough
+			case '.':
 				fmt.Println("%c", chr)
 			default:
 				fmt.Println("")
@@ -66,6 +73,7 @@ func printScreen() {
 		simpleansi.MoveCursor(g.row, g.col)
 		fmt.Println("G")
 	}
+	fmt.Println("Score: ", score, "\tLives: ", lives)
 }
 func initialize() {
 	cbTerm := exec.Command("stty", "cbreak", "-echo")
@@ -139,6 +147,12 @@ func makeMove(oldRow, oldCol int, dir string) (newRow, newCol int) {
 }
 func movePlayer(dir string) {
 	player.row, player.col = makeMove(player.row, player.col, dir)
+	switch maze[player.row][player.col] {
+	case '.':
+		numDots--
+		score++
+		maze[player.row] = maze[player.row][0:player.col] + " " + maze[player.row][player.col+1:]
+	}
 }
 func drawDirection() string {
 	dir := rand.Intn(4)
@@ -184,9 +198,13 @@ func main() {
 		movePlayer(input)
 		moveGhosts()
 		// process collisions
-
+		for _, g := range ghosts {
+			if player == *g {
+				lives = 0
+			}
+		}
 		// check game over
-		if input == "ESC" {
+		if input == "ESC" || numDots == 0 || lives <= 0 {
 			break
 		}
 
