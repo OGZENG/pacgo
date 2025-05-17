@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os/exec"
 )
 import "os"
@@ -17,6 +18,7 @@ type sprite struct {
 }
 
 var player sprite
+var ghosts []*sprite
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
@@ -35,7 +37,9 @@ func loadMaze(file string) error {
 		for col, char := range line {
 			switch char {
 			case 'P':
-				player = sprite{row, col} //use {} to construct structure
+				player = sprite{row, col}
+			case 'G':
+				ghosts = append(ghosts, &sprite{row, col}) //use {} to construct structure
 			}
 		}
 	}
@@ -58,6 +62,10 @@ func printScreen() {
 	simpleansi.MoveCursor(player.row, player.col)
 	fmt.Println("P")
 	simpleansi.MoveCursor(len(maze)+1, 0)
+	for _, g := range ghosts {
+		simpleansi.MoveCursor(g.row, g.col)
+		fmt.Println("G")
+	}
 }
 func initialize() {
 	cbTerm := exec.Command("stty", "cbreak", "-echo")
@@ -132,6 +140,23 @@ func makeMove(oldRow, oldCol int, dir string) (newRow, newCol int) {
 func movePlayer(dir string) {
 	player.row, player.col = makeMove(player.row, player.col, dir)
 }
+func drawDirection() string {
+	dir := rand.Intn(4)
+	move := map[int]string{
+		0: "UP",
+		1: "DOWN",
+		2: "RIGHT",
+		3: "LEFT",
+	}
+	return move[dir]
+}
+func moveGhosts() {
+	for _, g := range ghosts {
+		dir := drawDirection()
+		g.row, g.col = makeMove(g.row, g.col, dir)
+	}
+
+}
 func main() {
 	// initialize game
 	initialize()
@@ -157,6 +182,7 @@ func main() {
 
 		// process movement
 		movePlayer(input)
+		moveGhosts()
 		// process collisions
 
 		// check game over
