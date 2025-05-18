@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/danicat/simpleansi"
@@ -21,8 +23,10 @@ var (
 var maze []string
 
 type sprite struct {
-	row int
-	col int
+	row      int
+	col      int
+	startRow int
+	startCol int
 }
 type config struct {
 	Player   string `json:"player"`
@@ -39,7 +43,7 @@ var cfg config
 var player sprite
 var ghosts []*sprite
 var score int
-var lives = 1
+var lives = 3
 var numDots int
 
 func loadConfig(file string) error {
@@ -73,9 +77,9 @@ func loadMaze(file string) error {
 		for col, char := range line {
 			switch char {
 			case 'P':
-				player = sprite{row, col}
+				player = sprite{row, col, row, col}
 			case 'G':
-				ghosts = append(ghosts, &sprite{row, col})
+				ghosts = append(ghosts, &sprite{row, col, row, col})
 			case '.':
 				numDots++ //use {} to construct structure
 			}
@@ -100,14 +104,18 @@ func printScreen() {
 		fmt.Println()
 	}
 	moveCursor(player.row, player.col)
-	fmt.Print(cfg.Player)
-
-	for _, g := range ghosts {
-		moveCursor(g.row, g.col)
-		fmt.Print(cfg.Ghost)
+	livesRemaining := strconv.Itoa(lives)
+	if cfg.UseEmoji {
+		livesRemaining = getLivesAsEmoji()
 	}
-	moveCursor(len(maze)+1, 0)
-	fmt.Println("Score: ", score, "\tLives: ", lives)
+	fmt.Println("Score: ", score, "\tLives: ", livesRemaining)
+}
+func getLivesAsEmoji() string {
+	buf := bytes.Buffer{}
+	for i := lives; i > 0; i-- {
+		buf.WriteString(cfg.Player)
+	}
+	return buf.String()
 }
 func initialize() {
 	cbTerm := exec.Command("stty", "cbreak", "-echo")
@@ -260,8 +268,15 @@ func main() {
 		moveGhosts()
 		// process collisions
 		for _, g := range ghosts {
-			if player == *g {
-				lives--
+			if player.row == g.row && player.col == g.col {
+				lives = lives - 1
+				if lives != 0 {
+					moveCursor(player.row, player.col)
+					fmt.Print(cfg.Death)
+					moveCursor(len(maze)+2, 0)
+					time.Sleep(1000 * time.Millisecond)
+					player.row, player.col = player.startRow, player.startCol
+				}
 			}
 		}
 		//update Screen
