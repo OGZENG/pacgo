@@ -110,9 +110,9 @@ func readInput() (string, error) {
 			case 'B':
 				return "DOWN", nil
 			case 'C':
-				return "LEFT", nil
-			case 'D':
 				return "RIGHT", nil
+			case 'D':
+				return "LEFT", nil
 
 			}
 		}
