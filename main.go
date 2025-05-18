@@ -1,15 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"os/exec"
 	"time"
+
+	"github.com/danicat/simpleansi"
 )
-import "os"
-import "bufio"
-import "github.com/danicat/simpleansi"
 
 var maze []string
 
@@ -60,19 +61,19 @@ func printScreen() {
 			case '#':
 				fallthrough
 			case '.':
-				fmt.Println("%c", chr)
+				fmt.Printf("%c", chr)
 			default:
-				fmt.Println("")
+				fmt.Print(" ")
 			}
 		}
 		fmt.Println()
 	}
 	simpleansi.MoveCursor(player.row, player.col)
-	fmt.Println("P")
+	fmt.Print("P")
 	simpleansi.MoveCursor(len(maze)+1, 0)
 	for _, g := range ghosts {
 		simpleansi.MoveCursor(g.row, g.col)
-		fmt.Println("G")
+		fmt.Print("G")
 	}
 	fmt.Println("Score: ", score, "\tLives: ", lives)
 }
@@ -205,6 +206,7 @@ func main() {
 			movePlayer(inp)
 		default:
 		}
+		moveGhosts()
 		// process collisions
 		for _, g := range ghosts {
 			if player == *g {
