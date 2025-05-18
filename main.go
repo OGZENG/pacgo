@@ -70,11 +70,12 @@ func printScreen() {
 	}
 	simpleansi.MoveCursor(player.row, player.col)
 	fmt.Print("P")
-	simpleansi.MoveCursor(len(maze)+1, 0)
+
 	for _, g := range ghosts {
 		simpleansi.MoveCursor(g.row, g.col)
 		fmt.Print("G")
 	}
+	simpleansi.MoveCursor(len(maze)+1, 0)
 	fmt.Println("Score: ", score, "\tLives: ", lives)
 }
 func initialize() {
