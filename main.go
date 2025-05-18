@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -13,6 +14,10 @@ import (
 	"github.com/danicat/simpleansi"
 )
 
+var (
+	configFile = flag.String("config-file", "config.json", "path to custom configuration file")
+	mazeFile   = flag.String("maze-file", "maze01.txt", "path to a custom maze file")
+)
 var maze []string
 
 type sprite struct {
@@ -214,19 +219,20 @@ func moveCursor(row, col int) {
 	}
 }
 func main() {
+	flag.Parse()
 	// initialize game
 	initialize()
 	defer cleanup()
 
 	// load resources
-	err := loadMaze("maze01.txt")
+	err := loadMaze(*mazeFile)
 	if err != nil {
 		log.Println("failed to open: ", err)
 		return
 	}
-	err = loadConfig("config.json")
+	err = loadConfig(*configFile)
 	if err != nil {
-		log.Println("failed to load confoguration:", err)
+		log.Println("failed to load configuration:", err)
 		return
 	}
 
