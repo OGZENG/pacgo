@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os/exec"
+	"time"
 )
 import "os"
 import "bufio"
@@ -91,7 +92,7 @@ func cleanup() {
 		log.Fatalln("unable to recover to cooked module", err)
 	}
 }
-func readinput() (string, error) {
+func readInput() (string, error) {
 	buffer := make([]byte, 100)
 	cnt, err := os.Stdin.Read(buffer)
 	if err != nil {
@@ -184,30 +185,41 @@ func main() {
 	}
 
 	// game loop
-	for {
-		// update screen
-		printScreen()
-		// process input
-		input, err := readinput()
-		if err != nil {
-			log.Print("error reading input", err)
-			break
+	input := make(chan string)
+	go func(ch chan<- string) {
+		for {
+			input, err := readInput()
+			if err != nil {
+				log.Println("error reading input:", err)
+				ch <- "ESC"
+			}
+			ch <- input
 		}
-
-		// process movement
-		movePlayer(input)
-		moveGhosts()
+	}(input)
+	for {
+		select {
+		case inp := <-input:
+			if inp == "ESC" {
+				lives = 0
+			}
+			movePlayer(inp)
+		default:
+		}
 		// process collisions
 		for _, g := range ghosts {
 			if player == *g {
-				lives = 0
+				lives--
 			}
 		}
+		//update Screen
+		printScreen()
+
 		// check game over
-		if input == "ESC" || numDots == 0 || lives <= 0 {
+		if numDots == 0 || lives <= 0 {
 			break
 		}
 
 		// repeat
+		time.Sleep(200 * time.Millisecond)
 	}
 }
